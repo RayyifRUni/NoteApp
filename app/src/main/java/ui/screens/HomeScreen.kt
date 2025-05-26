@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -46,6 +49,27 @@ fun HomeScreen(
                 errorMessage = "Error memuat catatan: ${e.message}"
             }
         }
+    }
+
+    fun deleteNote(noteId: String) {
+        coroutineScope.launch {
+            try {
+                val result = repository.deleteNote(noteId)
+                if (result.isSuccess) {
+                    loadNotes()
+                } else {
+                    errorMessage = result.exceptionOrNull()?.message ?: "Gagal menghapus catatan"
+                }
+            } catch (e: Exception) {
+                Log.e("HomeScreen", "Error menghapus catatan: ${e.message}", e)
+                errorMessage = "Error menghapus catatan: ${e.message}"
+            }
+        }
+    }
+
+    fun downloadNote(note: Note) {
+        // Implement download functionality
+        Log.d("HomeScreen", "Download note: ${note.title}")
     }
 
     LaunchedEffect(Unit) {
@@ -118,34 +142,78 @@ fun HomeScreen(
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp)
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            note.imageUrl?.let { url ->
-                                AsyncImage(
-                                    model = url,
-                                    contentDescription = "Gambar Catatan",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(140.dp)
-                                        .padding(bottom = 8.dp)
+                            // Konten catatan
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                note.imageUrl?.let { url ->
+                                    AsyncImage(
+                                        model = url,
+                                        contentDescription = "Gambar Catatan",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(140.dp)
+                                            .padding(bottom = 8.dp)
+                                    )
+                                }
+
+                                Text(
+                                    text = note.title,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = note.content,
+                                    fontSize = 14.sp,
+                                    color = Color.Black
                                 )
                             }
 
-                            Text(
-                                text = note.title,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = note.content,
-                                fontSize = 14.sp,
-                                color = Color.Black
-                            )
+                            // Button actions di sebelah kanan
+                            Column(
+                                modifier = Modifier.padding(start = 12.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                IconButton(
+                                    onClick = { onEditNote(note.id) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { deleteNote(note.id) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { downloadNote(note) },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Download,
+                                        contentDescription = "Download",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
